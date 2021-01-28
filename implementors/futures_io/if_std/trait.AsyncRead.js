@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["js_sys_futures"] = [{"text":"impl AsyncRead for <a class=\"struct\" href=\"js_sys_futures/struct.JsAsyncRead.html\" title=\"struct js_sys_futures::JsAsyncRead\">JsAsyncRead</a>","synthetic":false,"types":["js_sys_futures::async_read::JsAsyncRead"]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

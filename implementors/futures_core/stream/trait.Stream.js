@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["js_sys_futures"] = [{"text":"impl&lt;T:&nbsp;<a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/marker/trait.Unpin.html\" title=\"trait core::marker::Unpin\">Unpin</a> + <a class=\"trait\" href=\"https://docs.rs/wasm-bindgen/0.2/wasm_bindgen/cast/trait.JsCast.html\" title=\"trait wasm_bindgen::cast::JsCast\">JsCast</a>&gt; Stream for <a class=\"struct\" href=\"js_sys_futures/struct.JsStream.html\" title=\"struct js_sys_futures::JsStream\">JsStream</a>&lt;T&gt;","synthetic":false,"types":["js_sys_futures::stream::JsStream"]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
