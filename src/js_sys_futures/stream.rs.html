@@ -69,23 +69,11 @@
 <span id="66">66</span>
 <span id="67">67</span>
 <span id="68">68</span>
-<span id="69">69</span>
-<span id="70">70</span>
-<span id="71">71</span>
-<span id="72">72</span>
-<span id="73">73</span>
-<span id="74">74</span>
-<span id="75">75</span>
-<span id="76">76</span>
-<span id="77">77</span>
-<span id="78">78</span>
-<span id="79">79</span>
-<span id="80">80</span>
-<span id="81">81</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="ident">futures_core</span>::{<span class="ident">Future</span>, <span class="ident">Stream</span>};
-<span class="kw">use</span> <span class="ident">js_sys</span>::{<span class="ident">AsyncIterator</span>, <span class="ident">Boolean</span>, <span class="ident">Reflect</span>};
+<span class="kw">use</span> <span class="ident">js_sys</span>::{<span class="ident">AsyncIterator</span>, <span class="ident">IteratorNext</span>};
 <span class="kw">use</span> <span class="ident">std</span>::{
+    <span class="ident">convert</span>::<span class="ident">TryFrom</span>,
     <span class="ident">pin</span>::<span class="ident">Pin</span>,
     <span class="ident">task</span>::{<span class="ident">Context</span>, <span class="ident">Poll</span>},
 };
@@ -99,8 +87,8 @@
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Unpin</span> <span class="op">+</span> <span class="ident">JsCast</span><span class="op">&gt;</span> <span class="ident">JsStream</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">inner</span>: <span class="ident">AsyncIterator</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">anyhow</span>::<span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">next</span> <span class="op">=</span> <span class="ident">JsFuture</span>::<span class="ident">from</span>(<span class="ident">inner</span>.<span class="ident">next</span>().<span class="ident">map_err</span>(<span class="ident">AsyncReadableError</span>)<span class="question-mark">?</span>);
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">inner</span>: <span class="ident">AsyncIterator</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">JsValue</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">next</span> <span class="op">=</span> <span class="ident">JsFuture</span>::<span class="ident">from</span>(<span class="ident">inner</span>.<span class="ident">next</span>()<span class="question-mark">?</span>);
         <span class="kw">let</span> <span class="ident">phantom</span> <span class="op">=</span> <span class="ident">std</span>::<span class="ident">marker</span>::<span class="ident">PhantomData</span>;
         <span class="prelude-val">Ok</span>(<span class="self">Self</span> { <span class="ident">inner</span>, <span class="ident">next</span>, <span class="ident">phantom</span> })
     }
@@ -111,13 +99,11 @@
         <span class="kw">let</span> <span class="ident">status</span> <span class="op">=</span> <span class="ident">next</span>.<span class="ident">poll</span>(<span class="ident">cx</span>)<span class="question-mark">?</span>;
         <span class="kw">match</span> <span class="ident">status</span> {
             <span class="ident">Poll</span>::<span class="ident">Ready</span>(<span class="ident">object</span>) <span class="op">=</span><span class="op">&gt;</span> {
-                <span class="kw">let</span> <span class="ident">done</span> <span class="op">=</span> <span class="ident">Reflect</span>::<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="ident">object</span>, <span class="kw-2">&amp;</span><span class="string">&quot;done&quot;</span>.<span class="ident">into</span>())<span class="question-mark">?</span>;
-                <span class="kw">let</span> <span class="ident">done</span> <span class="op">=</span> <span class="ident">done</span>.<span class="ident">unchecked_into</span>::<span class="op">&lt;</span><span class="ident">Boolean</span><span class="op">&gt;</span>().<span class="ident">value_of</span>();
-                <span class="kw">if</span> <span class="ident">done</span> {
+                <span class="kw">let</span> <span class="ident">iterator_next</span> <span class="op">=</span> <span class="ident">object</span>.<span class="ident">unchecked_into</span>::<span class="op">&lt;</span><span class="ident">IteratorNext</span><span class="op">&gt;</span>();
+                <span class="kw">if</span> <span class="ident">iterator_next</span>.<span class="ident">done</span>() {
                     <span class="prelude-val">Ok</span>(<span class="ident">Poll</span>::<span class="ident">Ready</span>(<span class="prelude-val">None</span>))
                 } <span class="kw">else</span> {
-                    <span class="kw">let</span> <span class="ident">value</span> <span class="op">=</span> <span class="ident">Reflect</span>::<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="ident">object</span>, <span class="kw-2">&amp;</span><span class="string">&quot;value&quot;</span>.<span class="ident">into</span>())<span class="question-mark">?</span>;
-                    <span class="kw">let</span> <span class="ident">value</span> <span class="op">=</span> <span class="ident">value</span>.<span class="ident">unchecked_into</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>();
+                    <span class="kw">let</span> <span class="ident">value</span> <span class="op">=</span> <span class="ident">iterator_next</span>.<span class="ident">value</span>().<span class="ident">unchecked_into</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>();
                     <span class="kw">match</span> <span class="ident">this</span>.<span class="ident">inner</span>.<span class="ident">next</span>() {
                         <span class="prelude-val">Ok</span>(<span class="ident">promise</span>) <span class="op">=</span><span class="op">&gt;</span> {
                             <span class="ident">this</span>.<span class="ident">next</span> <span class="op">=</span> <span class="ident">JsFuture</span>::<span class="ident">from</span>(<span class="ident">promise</span>);
@@ -129,29 +115,17 @@
                     <span class="prelude-val">Ok</span>(<span class="ident">Poll</span>::<span class="ident">Ready</span>(<span class="prelude-val">Some</span>(<span class="ident">value</span>)))
                 }
             },
-            <span class="ident">Poll</span>::<span class="ident">Pending</span> <span class="op">=</span><span class="op">&gt;</span> {
-                <span class="ident">cx</span>.<span class="ident">waker</span>().<span class="ident">clone</span>().<span class="ident">wake</span>();
-                <span class="prelude-val">Ok</span>(<span class="ident">Poll</span>::<span class="ident">Pending</span>)
-            },
+            <span class="ident">Poll</span>::<span class="ident">Pending</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Poll</span>::<span class="ident">Pending</span>),
         }
     }
 }
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
-<span class="kw">struct</span> <span class="ident">AsyncReadableError</span>(<span class="ident">JsValue</span>);
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Unpin</span> <span class="op">+</span> <span class="ident">JsCast</span><span class="op">&gt;</span> <span class="ident">TryFrom</span><span class="op">&lt;</span><span class="ident">AsyncIterator</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">JsStream</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
+    <span class="kw">type</span> <span class="ident">Error</span> <span class="op">=</span> <span class="ident">JsValue</span>;
 
-<span class="kw">unsafe</span> <span class="kw">impl</span> <span class="ident">Send</span> <span class="kw">for</span> <span class="ident">AsyncReadableError</span> {
-}
-<span class="kw">unsafe</span> <span class="kw">impl</span> <span class="ident">Sync</span> <span class="kw">for</span> <span class="ident">AsyncReadableError</span> {
-}
-
-<span class="kw">impl</span> <span class="ident">std</span>::<span class="ident">fmt</span>::<span class="ident">Display</span> <span class="kw">for</span> <span class="ident">AsyncReadableError</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">fmt</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">std</span>::<span class="ident">fmt</span>::<span class="ident">Formatter</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">std</span>::<span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
-        <span class="macro">write</span><span class="macro">!</span>(<span class="ident">fmt</span>, <span class="string">&quot;{:?}&quot;</span>, <span class="self">self</span>.<span class="number">0</span>)
+    <span class="kw">fn</span> <span class="ident">try_from</span>(<span class="ident">inner</span>: <span class="ident">AsyncIterator</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">JsValue</span><span class="op">&gt;</span> {
+        <span class="self">Self</span>::<span class="ident">new</span>(<span class="ident">inner</span>)
     }
-}
-
-<span class="kw">impl</span> <span class="ident">std</span>::<span class="ident">error</span>::<span class="ident">Error</span> <span class="kw">for</span> <span class="ident">AsyncReadableError</span> {
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Unpin</span> <span class="op">+</span> <span class="ident">JsCast</span><span class="op">&gt;</span> <span class="ident">Stream</span> <span class="kw">for</span> <span class="ident">JsStream</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
