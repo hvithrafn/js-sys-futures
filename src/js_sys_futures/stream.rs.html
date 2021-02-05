@@ -69,6 +69,7 @@
 <span id="66">66</span>
 <span id="67">67</span>
 <span id="68">68</span>
+<span id="69">69</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="ident">futures_core</span>::{<span class="ident">Future</span>, <span class="ident">Stream</span>};
 <span class="kw">use</span> <span class="ident">js_sys</span>::{<span class="ident">AsyncIterator</span>, <span class="ident">IteratorNext</span>};
@@ -87,6 +88,7 @@
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Unpin</span> <span class="op">+</span> <span class="ident">JsCast</span><span class="op">&gt;</span> <span class="ident">JsStream</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
+    <span class="doccomment">/// The inner [`js_sys::AsyncIterator`] is expected to yield values of type `T`.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">inner</span>: <span class="ident">AsyncIterator</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">JsValue</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">next</span> <span class="op">=</span> <span class="ident">JsFuture</span>::<span class="ident">from</span>(<span class="ident">inner</span>.<span class="ident">next</span>()<span class="question-mark">?</span>);
         <span class="kw">let</span> <span class="ident">phantom</span> <span class="op">=</span> <span class="ident">std</span>::<span class="ident">marker</span>::<span class="ident">PhantomData</span>;
@@ -103,7 +105,7 @@
                 <span class="kw">if</span> <span class="ident">iterator_next</span>.<span class="ident">done</span>() {
                     <span class="prelude-val">Ok</span>(<span class="ident">Poll</span>::<span class="ident">Ready</span>(<span class="prelude-val">None</span>))
                 } <span class="kw">else</span> {
-                    <span class="kw">let</span> <span class="ident">value</span> <span class="op">=</span> <span class="ident">iterator_next</span>.<span class="ident">value</span>().<span class="ident">unchecked_into</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>();
+                    <span class="kw">let</span> <span class="ident">value</span> <span class="op">=</span> <span class="ident">iterator_next</span>.<span class="ident">value</span>().<span class="ident">dyn_into</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>()<span class="question-mark">?</span>;
                     <span class="kw">match</span> <span class="ident">this</span>.<span class="ident">inner</span>.<span class="ident">next</span>() {
                         <span class="prelude-val">Ok</span>(<span class="ident">promise</span>) <span class="op">=</span><span class="op">&gt;</span> {
                             <span class="ident">this</span>.<span class="ident">next</span> <span class="op">=</span> <span class="ident">JsFuture</span>::<span class="ident">from</span>(<span class="ident">promise</span>);
