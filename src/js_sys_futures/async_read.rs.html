@@ -202,7 +202,7 @@
                                 <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">error</span>);
                             },
                         }
-                        <span class="ident">cx</span>.<span class="ident">waker</span>().<span class="ident">clone</span>().<span class="ident">wake</span>();
+                        <span class="ident">cx</span>.<span class="ident">waker</span>().<span class="ident">wake_by_ref</span>();
                         <span class="prelude-val">Ok</span>(<span class="ident">Poll</span>::<span class="ident">Pending</span>)
                     }
                 },
